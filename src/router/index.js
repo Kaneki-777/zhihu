@@ -1,25 +1,44 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
-const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: HomeView
-  },
-  {
-    path: '/about',
-    name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
-  }
-]
-
+import routes from './routes'
+import store from '@/store/index'
+import api from '@/api/index'
+import { Toast } from 'vant'
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
-  routes
+  history: createWebHashHistory(),
+  routes,
 })
-
+router.beforeEach(async (to, from, next) => {
+  let arr = ['/person', '/updateperson', '/store']
+  if (arr.includes(to.path)) {
+    // 校验是否登录
+    let isLogin = store.state.isLogin
+    if (isLogin) {
+      next()
+      return
+    }
+    if (isLogin === false) {
+      Toast('小主，请您先登录哦~')
+      next('/login')
+      return
+    }
+    if (isLogin === null) {
+      try {
+        let { code, data } = await api.checkLogin();
+        if (+code !== 0) {
+          Toast('小主，请您先登录哦~');
+          next('/login');
+          return;
+        }
+        store.commit('changeIsLogin', true);
+        store.commit('changeInfo', data);
+        next();
+      } catch (error) {
+        console.log(error);
+      }
+      return;
+    }
+  }
+  next()
+})
 export default router
