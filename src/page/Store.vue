@@ -1,5 +1,13 @@
 <template>
 	<Nav title="收藏列表" />
+
+	<input type="text" v-model="pass">
+	<van-button
+							size="small"
+							type="primary"
+							@click="sendcode">
+		提交
+	</van-button>
 </template>
 
 <script>
@@ -9,6 +17,17 @@ export default {
 	name: "Store",
 	components: {
 		Nav
+	},
+	data() {
+		return {
+			pass: ''
+		}
+	},
+	methods: {
+		async sendcode() {
+			console.log(this.pass);
+
+		}
 	}
 }
 </script>
