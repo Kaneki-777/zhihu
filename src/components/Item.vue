@@ -20,7 +20,8 @@ export default {
 			required: true
 		}
 	},
-	setup() {
+	setup(props) {
+		console.log(props);
 	}
 
 }

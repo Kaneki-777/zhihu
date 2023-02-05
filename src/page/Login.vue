@@ -108,6 +108,8 @@ export default {
       localStorage.setItem("token", token);
       store.commit("changeIsLogin", true);
       store.dispatch("changeInfoAsync");
+      store.commit("changeStoreList", null);
+
       Toast("登陆成功");
       // 跳转到指定地址
       let from = route.query.from;

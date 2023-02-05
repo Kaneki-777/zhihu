@@ -2,8 +2,10 @@ import {
 	createApp
 } from 'vue';
 import App from './App.vue';
-import router from './router/index';
+
 import store from './store';
+import router from './router/index';
+
 
 import Vant, {
 	Lazyload
@@ -21,9 +23,9 @@ window.addEventListener('resize', handleMaxWidth);
 
 const app = createApp(App);
 app.use(store);
+app.use(router);
 app.use(Vant);
 app.use(Lazyload, {
 	lazyComponent: true,
 });
-app.use(router);
 app.mount('#app');

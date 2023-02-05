@@ -6,26 +6,72 @@
 		<van-icon name="arrow-left" @click="handle"></van-icon>
 		<van-icon name="comment-o" :badge="comments"></van-icon>
 		<van-icon name="good-job-o" :badge="popularity"></van-icon>
-		<van-icon name="star-o" color="#1989fa"></van-icon>
+		<van-icon name="star-o" :color="isStore ? '#1989fa' : '#000'" @click="storeHandle"></van-icon>
 		<van-icon name="share-o" color="#cccccc"></van-icon>
 	</div>
 </template>
 
 <script>
 import { useRouter, useRoute } from 'vue-router';
-import { reactive, toRefs, onBeforeMount, onBeforeUnmount, onUpdated } from 'vue';
+import { reactive, toRefs, onBeforeMount, onBeforeUnmount, onUpdated, computed } from 'vue';
 import api from '@/api/index';
+import { useStore } from 'vuex';
+import { Toast } from "vant";
 export default {
 	// eslint-disable-next-line vue/multi-word-component-names
 	name: "Detail",
 	setup() {
 		const router = useRouter(),
-			route = useRoute();
+			route = useRoute(),
+			store = useStore();
+
 		let state = reactive({
 			comments: 0,
 			popularity: 0,
 			newsInfo: null
 		});
+
+		let isStore = computed(() => {
+			let { isLogin, storeList } = store.state;
+			if (isLogin) {
+				if (!Array.isArray(storeList)) storeList = [];
+				return storeList.some(item => {
+					return +item.news.id === +route.params.id
+				})
+			}
+			return false;
+		})
+		onBeforeMount(async () => {
+			if (store.state.isLogin === null) {
+				await store.dispatch("changeIsLoginAsync");
+			}
+			if (store.state.isLogin) {
+				if (store.state.info === null) store.dispatch("changeInfoAsync");
+				if (store.state.storeList === null)
+					store.dispatch("changeStoreListAsync");
+			}
+		});
+		const storeHandle = async () => {
+			if (!store.state.isLogin) {
+				Toast('请登录');
+				router.push({
+					path: '/login',
+					query: {
+						from: `detail/${route.params.id}`
+					}
+				})
+				return;
+			}
+			if (isStore.value) return;
+			let { code } = await api.store(route.params.id);
+			if (+code !== 0) {
+				Toast("小主，很遗憾，收藏失败~");
+				return;
+			}
+			Toast("小主很棒，收藏成功了~");
+			store.dispatch("changeStoreListAsync");
+		}
+
 		onBeforeMount(async () => {
 			let id = route.params.id;
 			let result = await api.queryNewsInfo(id);
@@ -54,12 +100,16 @@ export default {
 			if (!link) return;
 			document.head.removeChild(link);
 		});
+
 		const handle = () => {
 			router.back()
 		};
+
 		return {
 			handle,
-			...toRefs(state)
+			...toRefs(state),
+			isStore,
+			storeHandle
 		}
 	}
 }
